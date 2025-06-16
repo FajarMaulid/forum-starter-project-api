@@ -75,7 +75,7 @@ describe('ReplyRepositoryPostgres', () => {
       await RepliesHelper.addReply({ id: 'reply-123', comment_id: 'comment-123', content: 'isi reply', owner: 'user-123' });
       const repo = new ReplyRepoPg(pool, () => '123');
 
-      await expect(repo.verifyReplyExist('reply-123')).resolves.not.toThrow();
+      await expect(repo.verifyReplyExist('reply-123')).resolves.not.toThrow(NotFoundError);
     });
   });
 
@@ -89,7 +89,7 @@ describe('ReplyRepositoryPostgres', () => {
       await RepliesHelper.addReply({ id: 'reply-123', comment_id: 'comment-123', content: 'isi reply', owner: 'user-123' });
       const repo = new ReplyRepoPg(pool, () => '123');
 
-      await expect(repo.verifyReplyOwner({ replyId: 'reply-123', userId: 'user-123' })).resolves.not.toThrow();
+      await expect(repo.verifyReplyOwner({ replyId: 'reply-123', userId: 'user-123' })).resolves.not.toThrow(AuthorizationError);
     });
   });
 

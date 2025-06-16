@@ -57,7 +57,7 @@ describe('ThreadRepositoryPostgres', () => {
     it('resolves when thread exists', async () => {
       await ThreadsHelper.addThread({ id: 'thread-123', title: 'judul', body: 'isi', owner: 'user-123' });
       const repo = new ThreadRepoPg(pool, () => '123');
-      await expect(repo.verifyThreadExist('thread-123')).resolves.not.toThrow();
+      await expect(repo.verifyThreadExist('thread-123')).resolves.not.toThrow(NotFoundError);
     });
   });
 

@@ -70,7 +70,7 @@ describe('CommentRepositoryPostgres', () => {
     it('resolves when comment is present', async () => {
       await CommentsHelper.addComment({ id: 'comment-123', thread_id: 'thread-123', content: 'isi komen', owner: 'user-123' });
       const repo = new CommentRepoPg(pool, () => '123');
-      await expect(repo.verifyCommentExist('comment-123')).resolves.not.toThrow();
+      await expect(repo.verifyCommentExist('comment-123')).resolves.not.toThrow(NotFoundError);
     });
   });
 
@@ -85,7 +85,7 @@ describe('CommentRepositoryPostgres', () => {
       await CommentsHelper.addComment({ id: 'comment-123', thread_id: 'thread-123', content: 'isi komen', owner: 'user-123' });
       const repo = new CommentRepoPg(pool, () => '123');
       await expect(repo.verifyCommentOwner({ commentId: 'comment-123', userId: 'user-123' }))
-        .resolves.not.toThrow();
+        .resolves.not.toThrow(AuthorizationError);
     });
   });
 
