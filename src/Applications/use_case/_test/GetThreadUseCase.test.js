@@ -81,7 +81,7 @@ describe('GetThreadUseCase', () => {
 
     const result = await useCase.execute(threadId);
 
-    expect(threadRepository.verifyThreadExist).toHaveBeenCalledWith(threadId);
+    expect(threadRepository.verifyThreadExist).nottoHaveBeenCalledWith(threadId);
     expect(threadRepository.getThreadById).toHaveBeenCalledWith(threadId);
     expect(commentRepository.getCommentsByThreadId).toHaveBeenCalledWith(threadId);
     expect(replyRepository.getRepliesByCommentId).toHaveBeenCalledWith('comment-123');
