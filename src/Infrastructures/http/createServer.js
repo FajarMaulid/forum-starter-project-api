@@ -59,9 +59,9 @@ const createServer = async (container) => {
     const { response } = request;
 
     if (response instanceof Error) {
-      // Log original error and stack trace to terminal
-      console.error('Request error:', response.message);
-      console.error(response.stack);
+      // // Log original error and stack trace to terminal
+      // console.error('Request error:', response.message);
+      // console.error(response.stack);
 
       const translatedError = DomainErrorTranslator.translate(response);
 
