@@ -9,24 +9,22 @@ const CommentDetails = require('../../../Domains/comments/entities/CommentDetail
 const ReplyDetails = require('../../../Domains/replies/entities/ReplyDetails');
 
 describe('GetThreadUseCase', () => {
-  it('should execute the thread fetching process properly', async () => {
+  it('correctly orchestrates fetching a thread with its comments, replies, and like counts', async () => {
     const threadId = 'thread-123';
 
-    const threadRepository = new ThreadRepo();
-    const commentRepository = new CommentRepo();
-    const mockLikeRepository = new LikeRepository();
-    const replyRepository = new ReplyRepo();
+    const threadRepoMock = new ThreadRepository();
+    const commentRepoMock = new CommentRepository();
+    const likeRepoMock = new LikeRepository();
+    const replyRepoMock = new ReplyRepository();
 
-    threadRepository.verifyThreadExist = jest.fn().mockResolvedValue();
-    threadRepository.getThreadById = jest.fn().mockResolvedValue({
-      id: 'thread-123',
+    const threadData = {
+      id: threadId,
       title: 'sebuah thread',
       body: 'sebuah body thread',
       date: new Date('2021-08-08T07:59:16.198Z'),
       username: 'dicoding',
-    });
-
-    commentRepository.getCommentsByThreadId = jest.fn().mockResolvedValue([
+    };
+    const commentsData = [
       {
         id: 'comment-123',
         username: 'johndoe',
@@ -41,101 +39,71 @@ describe('GetThreadUseCase', () => {
         content: 'some racist comment',
         is_deleted: true,
       },
-    ]);
+    ];
+    const repliesFor123 = [
+      {
+        id: 'reply-123',
+        content: 'some racist reply',
+        date: new Date('2021-08-08T07:59:48.766Z'),
+        username: 'johndoe',
+        is_deleted: true,
+      },
+      {
+        id: 'reply-234',
+        content: 'sebuah balasan',
+        date: new Date('2021-08-08T08:07:01.522Z'),
+        username: 'dicoding',
+        is_deleted: false,
+      },
+    ];
 
-    mockLikeRepository.countCommentLikes = jest
-      .fn((commentId) => {
-        if (commentId === 'comment-123') {
-          return Promise.resolve(1);
-        }
-        return Promise.resolve(2);
-      });
-
-    replyRepository.getRepliesByCommentId = jest.fn((id) => {
-      if (id === 'comment-123') {
-        return Promise.resolve([
-          {
-            id: 'reply-123',
-            content: 'some racist reply',
-            date: new Date('2021-08-08T07:59:48.766Z'),
-            username: 'johndoe',
-            is_deleted: true,
-          },
-          {
-            id: 'reply-234',
-            content: 'sebuah balasan',
-            date: new Date('2021-08-08T08:07:01.522Z'),
-            username: 'dicoding',
-            is_deleted: false,
-          },
-        ]);
-      }
-      return Promise.resolve([]);
-    });
+    threadRepoMock.verifyThreadExist = jest.fn(() => Promise.resolve());
+    threadRepoMock.getThreadById = jest.fn(() => Promise.resolve(threadData));
+    commentRepoMock.getCommentsByThreadId = jest.fn(() => Promise.resolve(commentsData));
+    likeRepoMock.countCommentLikes = jest.fn((cid) =>
+      Promise.resolve(cid === 'comment-123' ? 1 : 2)
+    );
+    replyRepoMock.getRepliesByCommentId = jest.fn((cid) =>
+      Promise.resolve(cid === 'comment-123' ? repliesFor123 : [])
+    );
 
     const useCase = new GetThreadUseCase({
-      threadRepository,
-      commentRepository,
-      replyRepository,
+      threadRepository: threadRepoMock,
+      commentRepository: commentRepoMock,
+      likeRepository: likeRepoMock,
+      replyRepository: replyRepoMock,
     });
 
     const result = await useCase.execute(threadId);
 
-    expect(threadRepository.verifyThreadExist).toHaveBeenCalledWith(threadId);
-    expect(threadRepository.getThreadById).toHaveBeenCalledWith(threadId);
-    expect(commentRepository.getCommentsByThreadId).toHaveBeenCalledWith(threadId);
-    expect(replyRepository.getRepliesByCommentId).toHaveBeenCalledWith('comment-123');
-    expect(replyRepository.getRepliesByCommentId).toHaveBeenCalledWith('comment-234');
-    expect(mockLikeRepository.countCommentLikes).toHaveBeenCalledTimes(2);
-    expect(mockLikeRepository.countCommentLikes).toBeCalledWith('comment-123');
-    expect(mockLikeRepository.countCommentLikes).toHaveBeenLastCalledWith('comment-234');
+    expect(threadRepoMock.verifyThreadExist).toHaveBeenCalledWith(threadId);
+    expect(threadRepoMock.getThreadById).toHaveBeenCalledWith(threadId);
+    expect(commentRepoMock.getCommentsByThreadId).toHaveBeenCalledWith(threadId);
 
-    expect(thread)
-      .toEqual(
-        new ThreadDetails(
-          {
-            id: 'thread-123',
-            title: 'sebuah thread',
-            body: 'sebuah body thread',
-            date: new Date('2021-08-08T07:59:16.198Z'),
-            username: 'dicoding',
-            comments: [
-              new CommentDetails({
-                id: 'comment-123',
-                username: 'johndoe',
-                date: new Date('2021-08-08T07:22:33.555Z'),
-                content: 'sebuah comment',
-                is_deleted: false,
-                likeCount: 1,
-                replies: [
-                  new ReplyDetails({
-                    id: 'reply-123',
-                    content: 'some racist reply',
-                    date: new Date('2021-08-08T07:59:48.766Z'),
-                    username: 'johndoe',
-                    is_deleted: true,
-                  }),
-                  new ReplyDetails({
-                    id: 'reply-234',
-                    content: 'sebuah balasan',
-                    date: new Date('2021-08-08T08:07:01.522Z'),
-                    username: 'dicoding',
-                    is_deleted: false,
-                  }),
-                ],
-              }),
-              new CommentDetails({
-                id: 'comment-234',
-                username: 'dicoding',
-                date: new Date('2021-08-08T07:26:21.338Z'),
-                content: 'some racist comment',
-                is_deleted: true,
-                likeCount: 2,
-                replies: [],
-              }),
-            ],
-          },
-        ),
-      );
+    expect(replyRepoMock.getRepliesByCommentId).toHaveBeenCalledTimes(2);
+    expect(replyRepoMock.getRepliesByCommentId).toHaveBeenNthCalledWith(1, 'comment-123');
+    expect(replyRepoMock.getRepliesByCommentId).toHaveBeenNthCalledWith(2, 'comment-234');
+
+    expect(likeRepoMock.countCommentLikes).toHaveBeenCalledTimes(2);
+    expect(likeRepoMock.countCommentLikes).toHaveBeenNthCalledWith(1, 'comment-123');
+    expect(likeRepoMock.countCommentLikes).toHaveBeenNthCalledWith(2, 'comment-234');
+
+    expect(result).toEqual(
+      new ThreadDetails({
+        ...threadData,
+        comments: [
+          new CommentDetails({
+            ...commentsData[0],
+            likeCount: 1,
+            replies: repliesFor123.map(r => new ReplyDetails(r)),
+          }),
+          new CommentDetails({
+            ...commentsData[1],
+            likeCount: 2,
+            replies: [],
+          }),
+        ],
+      })
+    );
   });
 });
