@@ -3,7 +3,7 @@ import pluginJs from "@eslint/js";
 
 /** @type {import('eslint').Linter.FlatConfig[]} */
 export default [
-  { ignores: ["**/*.json", ".env", ".gitignore", "**/*.yml"] },
+  { ignores: ["**/*.json", ".env", ".gitignore", "**/*.yml", "*.pem"] },
   {
     files: ["migrations/**/*.js"],
     languageOptions: {
