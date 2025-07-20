@@ -3,13 +3,13 @@ import pluginJs from "@eslint/js";
 
 /** @type {import('eslint').Linter.FlatConfig[]} */
 export default [
-  { ignores: ["**/*.json", ".env", ".gitignore"] },
+  { ignores: ["**/*.json", ".env", ".gitignore", "**/*.yml"] },
   {
     files: ["migrations/**/*.js"],
     languageOptions: {
       parserOptions: {
         ecmaVersion: 2021,
-        sourceType: "module",
+        sourceType: "commonjs",
       },
       globals: {
         ...globals.node,

@@ -7,15 +7,16 @@ const UsersTableTestHelper = require('../../../../tests/UsersTableTestHelper');
 const ThreadsTableTestHelper = require('../../../../tests/ThreadsTableTestHelper');
 const CommentsTableTestHelper = require('../../../../tests/CommentsTableTestHelper');
 const RepliesTableTestHelper = require('../../../../tests/RepliesTableTestHelper');
+const LikesTableTestHelper = require('../../../../tests/LikesTableTestHelper.js');
 
-describe('Integration /threads endpoint', () => {
-  let token;
+describe('/threads endpoint', () => {
+  let accessToken;
   let userId;
 
   beforeEach(async () => {
-    const auth = await EndpointTestHelper.getAccessTokenAndUserIdHelper();
-    token = auth.accessToken;
-    userId = auth.userId;
+    const creds = await EndpointTestHelper.getAccessTokenAndUserIdHelper();
+    accessToken = creds.accessToken;
+    userId = creds.userId;
   });
 
   afterEach(async () => {
@@ -28,78 +29,78 @@ describe('Integration /threads endpoint', () => {
   });
 
   describe('POST /threads', () => {
-    it('should respond 201 and return the created thread', async () => {
-      const requestPayload = { title: 'judul', body: 'isi' };
+    it('returns 201 and new thread data', async () => {
+      const payload = { title: 'judul', body: 'isi' };
       const server = await createServer(container);
 
-      const response = await server.inject({
+      const res = await server.inject({
         method: 'POST',
         url: '/threads',
-        payload: requestPayload,
-        headers: { Authorization: `Bearer ${token}` },
+        payload,
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
 
-      const result = JSON.parse(response.payload);
-      expect(response.statusCode).toBe(201);
+      const result = JSON.parse(res.payload);
+      expect(res.statusCode).toBe(201);
       expect(result.status).toBe('success');
       expect(result.data.addedThread).toBeDefined();
       expect(result.data.addedThread).toHaveProperty('id');
-      expect(result.data.addedThread).toHaveProperty('title', requestPayload.title);
+      expect(result.data.addedThread).toHaveProperty('title', payload.title);
       expect(result.data.addedThread).toHaveProperty('owner', userId);
     });
 
-    it('should respond 400 if a required field is missing', async () => {
-      const requestPayload = { title: 'judul' };
+    it('returns 400 when payload missing required field', async () => {
+      const payload = { title: 'judul' };
       const server = await createServer(container);
 
-      const response = await server.inject({
+      const res = await server.inject({
         method: 'POST',
         url: '/threads',
-        payload: requestPayload,
-        headers: { Authorization: `Bearer ${token}` },
+        payload,
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
 
-      const result = JSON.parse(response.payload);
-      expect(response.statusCode).toBe(400);
+      const result = JSON.parse(res.payload);
+      expect(res.statusCode).toBe(400);
       expect(result.status).toBe('fail');
       expect(result.message).toBe('tidak dapat membuat thread baru karena properti yang dibutuhkan tidak ada');
     });
 
-    it('should respond 400 if data types are invalid', async () => {
-      const requestPayload = { title: 'judul', body: true };
+    it('returns 400 when payload has wrong data types', async () => {
+      const payload = { title: 'judul', body: true };
       const server = await createServer(container);
 
-      const response = await server.inject({
+      const res = await server.inject({
         method: 'POST',
         url: '/threads',
-        payload: requestPayload,
-        headers: { Authorization: `Bearer ${token}` },
+        payload,
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
 
-      const result = JSON.parse(response.payload);
-      expect(response.statusCode).toBe(400);
+      const result = JSON.parse(res.payload);
+      expect(res.statusCode).toBe(400);
       expect(result.status).toBe('fail');
       expect(result.message).toBe('tidak dapat membuat thread baru karena tipe data tidak sesuai');
     });
 
-    it('should respond 401 if authentication is missing', async () => {
-      const requestPayload = { title: 'judul', body: 'isi' };
+    it('returns 401 when no auth token provided', async () => {
+      const payload = { title: 'judul', body: 'isi' };
       const server = await createServer(container);
 
-      const response = await server.inject({
+      const res = await server.inject({
         method: 'POST',
         url: '/threads',
-        payload: requestPayload,
+        payload,
       });
 
-      const result = JSON.parse(response.payload);
-      expect(response.statusCode).toBe(401);
+      const result = JSON.parse(res.payload);
+      expect(res.statusCode).toBe(401);
       expect(result.message).toBe('Missing authentication');
     });
   });
 
   describe('GET /threads/{threadId}', () => {
-    it('should return 200 and thread details for an existing thread', async () => {
+    it('returns 200 and thread details when valid', async () => {
       const user1 = { id: 'user-1', username: 'username1', password: 'secret', fullname: 'full name 1' };
       const user2 = { id: 'user-2', username: 'username2', password: 'secret', fullname: 'full name 2' };
       await UsersTableTestHelper.addUser(user1);
@@ -121,8 +122,6 @@ describe('Integration /threads endpoint', () => {
         date: new Date('2024-10-02'),
         owner: user1.id,
       };
-      await CommentsTableTestHelper.addComment(comment1);
-
       const comment2 = {
         id: 'comment-2',
         threadId: threadData.id,
@@ -131,6 +130,7 @@ describe('Integration /threads endpoint', () => {
         owner: user2.id,
         isDeleted: true,
       };
+      await CommentsTableTestHelper.addComment(comment1);
       await CommentsTableTestHelper.addComment(comment2);
 
       const reply1 = {
@@ -140,8 +140,6 @@ describe('Integration /threads endpoint', () => {
         date: new Date('2024-10-04'),
         owner: user1.id,
       };
-      await RepliesTableTestHelper.addReply(reply1);
-
       const reply2 = {
         id: 'reply-2',
         commentId: comment1.id,
@@ -150,9 +148,14 @@ describe('Integration /threads endpoint', () => {
         owner: user2.id,
         isDeleted: true,
       };
+      await RepliesTableTestHelper.addReply(reply1);
       await RepliesTableTestHelper.addReply(reply2);
 
-      const expectedThread = {
+      await LikesTableTestHelper.addLike({ id: 'like-1', commentId: comment1.id, userId: user1.id });
+      await LikesTableTestHelper.addLike({ id: 'like-2', commentId: comment1.id, userId: user2.id });
+      await LikesTableTestHelper.addLike({ id: 'like-3', commentId: comment2.id, userId: user1.id });
+
+      const expected = {
         id: threadData.id,
         title: threadData.title,
         body: threadData.body,
@@ -164,6 +167,7 @@ describe('Integration /threads endpoint', () => {
             content: comment1.content,
             date: comment1.date.toISOString(),
             username: user1.username,
+            likeCount: 2,
             replies: [
               {
                 id: reply1.id,
@@ -184,32 +188,33 @@ describe('Integration /threads endpoint', () => {
             content: '**komentar telah dihapus**',
             date: comment2.date.toISOString(),
             username: user2.username,
+            likeCount: 1,
             replies: [],
           },
         ],
       };
 
       const server = await createServer(container);
-      const response = await server.inject({
+      const res = await server.inject({
         method: 'GET',
         url: `/threads/${threadData.id}`,
       });
 
-      const result = JSON.parse(response.payload);
-      expect(response.statusCode).toBe(200);
+      const result = JSON.parse(res.payload);
+      expect(res.statusCode).toBe(200);
       expect(result.status).toBe('success');
-      expect(result.data.thread).toStrictEqual(expectedThread);
+      expect(result.data.thread).toStrictEqual(expected);
     });
 
-    it('should respond 404 if the thread does not exist', async () => {
+    it('returns 404 when thread not found', async () => {
       const server = await createServer(container);
-      const response = await server.inject({
+      const res = await server.inject({
         method: 'GET',
         url: '/threads/not-found',
       });
 
-      const result = JSON.parse(response.payload);
-      expect(response.statusCode).toBe(404);
+      const result = JSON.parse(res.payload);
+      expect(res.statusCode).toBe(404);
       expect(result.status).toBe('fail');
       expect(result.message).toBe('Thread tidak ditemukan');
     });
