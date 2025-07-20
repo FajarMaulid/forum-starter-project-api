@@ -2,6 +2,7 @@
   "name": "forum-api-project",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "commonjs",
   "scripts": {
     "start": "node src/app.js",
     "start:dev": "nodemon src/app.js",

@@ -1,5 +1,3 @@
-/* istanbul ignore file */
-
 const { createContainer } = require('instances-container');
 
 const { nanoid } = require('nanoid');
@@ -14,10 +12,15 @@ const BcryptPasswordHash = require('./security/BcryptPasswordHash');
 
 const ThreadRepository = require('../Domains/threads/ThreadRepository');
 const ThreadRepositoryPostgres = require('./repository/ThreadRepositoryPostgres');
+
 const CommentRepository = require('../Domains/comments/CommentRepository');
 const CommentRepositoryPostgres = require('./repository/CommentRepositoryPostgres');
+
 const ReplyRepository = require('../Domains/replies/ReplyRepository');
 const ReplyRepositoryPostgres = require('./repository/ReplyRepositoryPostgres');
+
+const LikeRepository = require('../Domains/likes/LikeRepository');
+const LikeRepositoryPostgres = require('./repository/LikeRepositoryPostgres');
 
 const AddUserUseCase = require('../Applications/use_case/AddUserUseCase');
 const AuthenticationTokenManager = require('../Applications/security/AuthenticationTokenManager');
@@ -34,6 +37,7 @@ const DeleteCommentUseCase = require('../Applications/use_case/DeleteCommentUseC
 const GetThreadUseCase = require('../Applications/use_case/GetThreadUseCase');
 const AddReplyUseCase = require('../Applications/use_case/AddReplyUseCase');
 const DeleteReplyUseCase = require('../Applications/use_case/DeleteReplyUseCase');
+const LikeUnlikeUseCase = require('../Applications/use_case/LikeUnlikeUseCase');
 
 const container = createContainer();
 
@@ -43,12 +47,8 @@ container.register([
     Class: UserRepositoryPostgres,
     parameter: {
       dependencies: [
-        {
-          concrete: pool,
-        },
-        {
-          concrete: nanoid,
-        },
+        { concrete: pool },
+        { concrete: nanoid },
       ],
     },
   },
@@ -57,9 +57,7 @@ container.register([
     Class: AuthenticationRepositoryPostgres,
     parameter: {
       dependencies: [
-        {
-          concrete: pool,
-        },
+        { concrete: pool },
       ],
     },
   },
@@ -68,9 +66,7 @@ container.register([
     Class: BcryptPasswordHash,
     parameter: {
       dependencies: [
-        {
-          concrete: bcrypt,
-        },
+        { concrete: bcrypt },
       ],
     },
   },
@@ -79,9 +75,7 @@ container.register([
     Class: JwtTokenManager,
     parameter: {
       dependencies: [
-        {
-          concrete: Jwt.token,
-        },
+        { concrete: Jwt.token },
       ],
     },
   },
@@ -90,12 +84,8 @@ container.register([
     Class: ThreadRepositoryPostgres,
     parameter: {
       dependencies: [
-        {
-          concrete: pool,
-        },
-        {
-          concrete: nanoid,
-        },
+        { concrete: pool },
+        { concrete: nanoid },
       ],
     },
   },
@@ -104,12 +94,8 @@ container.register([
     Class: CommentRepositoryPostgres,
     parameter: {
       dependencies: [
-        {
-          concrete: pool,
-        },
-        {
-          concrete: nanoid,
-        },
+        { concrete: pool },
+        { concrete: nanoid },
       ],
     },
   },
@@ -118,18 +104,23 @@ container.register([
     Class: ReplyRepositoryPostgres,
     parameter: {
       dependencies: [
-        {
-          concrete: pool,
-        },
-        {
-          concrete: nanoid,
-        },
+        { concrete: pool },
+        { concrete: nanoid },
+      ],
+    },
+  },
+  {
+    key: LikeRepository.name,
+    Class: LikeRepositoryPostgres,
+    parameter: {
+      dependencies: [
+        { concrete: pool },
+        { concrete: nanoid },
       ],
     },
   },
 ]);
 
-// registering use cases
 container.register([
   {
     key: AddUserUseCase.name,
@@ -137,14 +128,8 @@ container.register([
     parameter: {
       injectType: 'destructuring',
       dependencies: [
-        {
-          name: 'userRepository',
-          internal: UserRepository.name,
-        },
-        {
-          name: 'passwordHash',
-          internal: PasswordHash.name,
-        },
+        { name: 'userRepository', internal: UserRepository.name },
+        { name: 'passwordHash', internal: PasswordHash.name },
       ],
     },
   },
@@ -154,22 +139,10 @@ container.register([
     parameter: {
       injectType: 'destructuring',
       dependencies: [
-        {
-          name: 'userRepository',
-          internal: UserRepository.name,
-        },
-        {
-          name: 'authenticationRepository',
-          internal: AuthenticationRepository.name,
-        },
-        {
-          name: 'authenticationTokenManager',
-          internal: AuthenticationTokenManager.name,
-        },
-        {
-          name: 'passwordHash',
-          internal: PasswordHash.name,
-        },
+        { name: 'userRepository', internal: UserRepository.name },
+        { name: 'authenticationRepository', internal: AuthenticationRepository.name },
+        { name: 'authenticationTokenManager', internal: AuthenticationTokenManager.name },
+        { name: 'passwordHash', internal: PasswordHash.name },
       ],
     },
   },
@@ -179,10 +152,7 @@ container.register([
     parameter: {
       injectType: 'destructuring',
       dependencies: [
-        {
-          name: 'authenticationRepository',
-          internal: AuthenticationRepository.name,
-        },
+        { name: 'authenticationRepository', internal: AuthenticationRepository.name },
       ],
     },
   },
@@ -192,14 +162,8 @@ container.register([
     parameter: {
       injectType: 'destructuring',
       dependencies: [
-        {
-          name: 'authenticationRepository',
-          internal: AuthenticationRepository.name,
-        },
-        {
-          name: 'authenticationTokenManager',
-          internal: AuthenticationTokenManager.name,
-        },
+        { name: 'authenticationRepository', internal: AuthenticationRepository.name },
+        { name: 'authenticationTokenManager', internal: AuthenticationTokenManager.name },
       ],
     },
   },
@@ -209,10 +173,7 @@ container.register([
     parameter: {
       injectType: 'destructuring',
       dependencies: [
-        {
-          name: 'threadRepository',
-          internal: ThreadRepository.name,
-        },
+        { name: 'threadRepository', internal: ThreadRepository.name },
       ],
     },
   },
@@ -222,14 +183,8 @@ container.register([
     parameter: {
       injectType: 'destructuring',
       dependencies: [
-        {
-          name: 'commentRepository',
-          internal: CommentRepository.name,
-        },
-        {
-          name: 'threadRepository',
-          internal: ThreadRepository.name,
-        },
+        { name: 'commentRepository', internal: CommentRepository.name },
+        { name: 'threadRepository', internal: ThreadRepository.name },
       ],
     },
   },
@@ -239,14 +194,8 @@ container.register([
     parameter: {
       injectType: 'destructuring',
       dependencies: [
-        {
-          name: 'commentRepository',
-          internal: CommentRepository.name,
-        },
-        {
-          name: 'threadRepository',
-          internal: ThreadRepository.name,
-        },
+        { name: 'commentRepository', internal: CommentRepository.name },
+        { name: 'threadRepository', internal: ThreadRepository.name },
       ],
     },
   },
@@ -256,18 +205,10 @@ container.register([
     parameter: {
       injectType: 'destructuring',
       dependencies: [
-        {
-          name: 'threadRepository',
-          internal: ThreadRepository.name,
-        },
-        {
-          name: 'commentRepository',
-          internal: CommentRepository.name,
-        },
-        {
-          name: 'replyRepository',
-          internal: ReplyRepository.name,
-        },
+        { name: 'threadRepository', internal: ThreadRepository.name },
+        { name: 'commentRepository', internal: CommentRepository.name },
+        { name: 'replyRepository', internal: ReplyRepository.name },
+        { name: 'likeRepository', internal: LikeRepository.name },
       ],
     },
   },
@@ -277,18 +218,9 @@ container.register([
     parameter: {
       injectType: 'destructuring',
       dependencies: [
-        {
-          name: 'threadRepository',
-          internal: ThreadRepository.name,
-        },
-        {
-          name: 'commentRepository',
-          internal: CommentRepository.name,
-        },
-        {
-          name: 'replyRepository',
-          internal: ReplyRepository.name,
-        },
+        { name: 'threadRepository', internal: ThreadRepository.name },
+        { name: 'commentRepository', internal: CommentRepository.name },
+        { name: 'replyRepository', internal: ReplyRepository.name },
       ],
     },
   },
@@ -298,18 +230,21 @@ container.register([
     parameter: {
       injectType: 'destructuring',
       dependencies: [
-        {
-          name: 'threadRepository',
-          internal: ThreadRepository.name,
-        },
-        {
-          name: 'commentRepository',
-          internal: CommentRepository.name,
-        },
-        {
-          name: 'replyRepository',
-          internal: ReplyRepository.name,
-        },
+        { name: 'threadRepository', internal: ThreadRepository.name },
+        { name: 'commentRepository', internal: CommentRepository.name },
+        { name: 'replyRepository', internal: ReplyRepository.name },
+      ],
+    },
+  },
+  {
+    key: LikeUnlikeUseCase.name,
+    Class: LikeUnlikeUseCase,
+    parameter: {
+      injectType: 'destructuring',
+      dependencies: [
+        { name: 'threadRepository', internal: ThreadRepository.name },
+        { name: 'commentRepository', internal: CommentRepository.name },
+        { name: 'likeRepository', internal: LikeRepository.name },
       ],
     },
   },
